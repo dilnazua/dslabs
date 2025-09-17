@@ -3,12 +3,12 @@ import random
 import pytest
 
 from dslabs.simulations.sim_send_many import SimSendMany
-from dslabs.nodes.node_multi_leader import NodeMultiLeader
+from dslabs.nodes import NodeMultiLeader, NodeEagerBroadcast
 
 
-def _run(seed: int, **kwargs):
+def _run(seed: int, node_class=NodeMultiLeader, **kwargs):
     random.seed(seed)
-    sim = SimSendMany(NodeMultiLeader, random_seed=seed, **kwargs)
+    sim = SimSendMany(node_class, random_seed=seed, **kwargs)
     sim.run_scenario()
     return sim
 
@@ -44,6 +44,7 @@ def test_fails_with_drops_on_last_write_replication():
         num_messages=num_messages,
         message_delay=1000,
         drop_prob=0.5,  # high drop rate
+        node_class=NodeEagerBroadcast,
     )
     values = sim.results["stored_values"]
     # Strict requirement (expected to FAIL initially): everyone has the final value
@@ -64,6 +65,7 @@ def test_fails_due_to_reordering_with_fast_client_rate():
         num_messages=num_messages,
         message_delay=10,  # << network delay range; invites reordering
         drop_prob=0.0,  # we are _not_ dropping messages
+        node_class=NodeEagerBroadcast,
     )
     values = sim.results["stored_values"]
     # Strict requirement (expected to FAIL initially): everyone has the final value
